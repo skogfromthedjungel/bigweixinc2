@@ -191,7 +191,26 @@ struct ContentView: View {
     @Environment(\.dismiss) var dismiss
     @State private var healthStore = HealthStore()
     
-    
+    struct InfoRow: View {
+        let icon: String
+        let color: Color
+        let text: String
+
+        var body: some View {
+            HStack {
+                Image(systemName: icon)
+                    .foregroundStyle(color)
+                    .frame(width: 28)
+
+                Text(text)
+
+                Spacer()
+            }
+            .padding()
+            .background(Color(.systemGray6))
+            .clipShape(RoundedRectangle(cornerRadius: 14))
+        }
+    }
     
     var body: some View {
         NavigationStack{
@@ -222,7 +241,7 @@ struct ContentView: View {
                         .font(.system(size: 20))
                         .padding(.horizontal, 40)
 
-                    Image(.dirt)
+                    Image(.sapl)
                         .resizable()
                         .scaledToFit()
                         .frame(width: 350, height: 450)
@@ -307,16 +326,6 @@ struct ContentView: View {
                         .frame(width: 350, height: 450)
                     
                 }
-//                TabView {
-//                        
-//                        Tab("See Cat", systemImage: "eyes") {
-//SleepView()
-//                        }
-//
-//                        Tab("Pop-up Cat", systemImage: "inset.filled.bottomhalf.rectangle") {
-//                            Text("Pop-up Cat")
-//                    }
-//                }
                 HStack {
                     //button for bedtime
                     Button (" Set Hours ") {
@@ -404,16 +413,39 @@ struct ContentView: View {
                 .sheet(isPresented: $shouldPresentSheet1) {
                 } content: {
                         VStack(spacing: 20) {
-                            Text("")
+                            Text("Take a moment and keep your phone")
+                                    .font(.subheadline)
+                                    .foregroundStyle(.secondary)
                             
-                                Text("The trees 🌲")
-                                Text("The grass 🌿")
-                                Text("The water 🌊")
-                                Text("How you feel ♥️")
-                                Text("Activities going on ⚽")
-                                Text("The cars 🚘")
-                            
-                            .font(.system(size: 24))
+                            VStack(spacing: 16) {
+                                InfoRow(icon: "tree.fill",
+                                        color: .green,
+                                        text: "The trees")
+
+                                InfoRow(icon: "leaf.fill",
+                                        color: .green,
+                                        text: "The grass")
+
+                                InfoRow(icon: "water.waves",
+                                        color: .blue,
+                                        text: "The water")
+
+                                InfoRow(icon: "heart.fill",
+                                        color: .red,
+                                        text: "How you feel")
+
+                                InfoRow(icon: "soccerball",
+                                        color: .black,
+                                        text: "Activities going on")
+
+                                InfoRow(icon: "car.fill",
+                                        color: .cyan,
+                                        text: "The cars")
+                            }
+                            .padding()
+                            .background(.thinMaterial)
+                            .clipShape(RoundedRectangle(cornerRadius: 25))
+                            .shadow(radius: 10)
                         
                         
                             if showButton {
