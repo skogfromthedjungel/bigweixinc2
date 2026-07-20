@@ -39,7 +39,7 @@ class HealthStore{
     }
     func calculateSteps() async throws {
         
-        steps = -20000
+        steps = 0
         guard let healthStore = self.healthStore else { return }
         
         let calendar = Calendar(identifier: .gregorian)
@@ -85,7 +85,7 @@ struct ContentView: View {
     
     
     
-    @AppStorage("water") private var water = 200
+    @AppStorage("water") private var water = 0
     @AppStorage("dates") private var savedDate = Date.now.addingTimeInterval(86400)
     
     //for sleep
@@ -184,7 +184,28 @@ struct ContentView: View {
     @State private var fill5 = false
     @State private var fill6 = false
     
-    
+    @AppStorage("lastWalkDate") private var lastWalkDate: Double = 0
+    @AppStorage("streak") private var streak = 6
+    func completeDailyWalk() {
+        let today = Calendar.current.startOfDay(for: Date())
+        let lastDate = Date(timeIntervalSince1970: lastWalkDate)
+
+        if Calendar.current.isDate(today, inSameDayAs: lastDate) {
+            return
+        }
+
+        if let yesterday = Calendar.current.date(byAdding: .day, value: -1, to: today),
+           Calendar.current.isDate(lastDate, inSameDayAs: yesterday) {
+
+            streak += 1
+
+        } else {
+
+            streak = 0
+        }
+
+        lastWalkDate = today.timeIntervalSince1970
+    }
     
     @State private var IsCoverShown = false
     
@@ -231,9 +252,7 @@ struct ContentView: View {
                             
                     }
                 }
-                
-               
-                        
+    
                 
                 //tree image
                 if water < 101 {
@@ -475,6 +494,7 @@ struct ContentView: View {
                         Button("Continue") {
                             showAlert = false
                             shouldPresentSheet2 = true
+                            completeDailyWalk()
                         }
                         
                     }
@@ -487,7 +507,7 @@ struct ContentView: View {
                         VStack{
                             
                             Form{
-                                Section(header: Text("Was the walk enjoyable?: ")){
+                                Section(header: Text("Was the walk enjoyable? ")){
                                     TextField(text: $question1, prompt: Text("Optional")) {
                                         Text("question1")
                                         
@@ -511,7 +531,7 @@ struct ContentView: View {
                                         
                                     }
                                 }
-                                Section(header: Text("How do you feel after the walk?: ")){
+                                Section(header: Text("How do you feel after the walk? ")){
                                     TextField(text: $question4, prompt: Text("0ptional")) {
                                         Text("question4")
                                     } .onSubmit {
@@ -551,6 +571,8 @@ struct ContentView: View {
                                             water += 10
                                         }
                                         
+                                       
+                                        
                                         water += healthStore.steps/200
                                         question1 = ""
                                         question2 = ""
@@ -582,11 +604,28 @@ struct ContentView: View {
                                         }
                                         Spacer()
                                         Button("Back to Home Page"){
-                                            shouldPresentSheet1 = false
-                                            shouldPresentSheet2 = false
-                                            shouldPresentSheet3 = false
-                                            healthStore.steps = 0
-                                        }
+                                            if streak == 7 {
+                                                    water += 20
+                                                    streak = 0
+                                                    showAlert = true
+                                                } else {
+                                                    shouldPresentSheet1 = false
+                                                    shouldPresentSheet2 = false
+                                                    shouldPresentSheet3 = false
+                                                    healthStore.steps = 0
+                                                }
+                                            }
+                                            .alert("7 Day Streak!", isPresented: $showAlert) {
+                                                Button("OK") {
+                                                    shouldPresentSheet1 = false
+                                                    shouldPresentSheet2 = false
+                                                    shouldPresentSheet3 = false
+                                                    healthStore.steps = 0
+                                                }
+                                            } message: {
+                                                Text("You achieved a 7 day streak! An extra 20 💧 has been added.")
+                                            }
+                                       
                                         .padding()
                                         .task {
                                             await healthStore.requestAuthorization()
