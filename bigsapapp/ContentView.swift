@@ -6,6 +6,47 @@ import Observation
 import SwiftData
 import Charts
 import UserNotifications
+import FamilyControls
+import DeviceActivity
+import ManagedSettings
+import Combine
+
+
+@MainActor
+class ScreenTimeManager: ObservableObject {
+
+    @Published var hasPermission = false
+
+    func requestPermission() async {
+
+        do {
+
+            try await AuthorizationCenter.shared.requestAuthorization(for: .individual)
+
+            hasPermission = true
+
+        } catch {
+
+            print("Authorization failed")
+
+            print(error)
+
+            hasPermission = false
+
+        }
+
+    }
+
+}
+
+
+class AppSelectionModel: ObservableObject {
+
+    @Published var selection = FamilyActivitySelection()
+
+}
+
+
 
 @Model
 class SleepEntry {
@@ -166,6 +207,8 @@ struct ContentView: View {
     @State private var shouldPresentSheet2 = false
     @State private var shouldPresentSheet3 = false
     
+    @State private var shouldPresentScreenTimeSheet = false
+    
     @State private var showAlert = false
     @State private var navigateToNextPage = false
     @State private var showButton = false
@@ -183,7 +226,7 @@ struct ContentView: View {
     @State private var fill4 = false
     @State private var fill5 = false
     @State private var fill6 = false
-    
+
     @AppStorage("lastWalkDate") private var lastWalkDate: Double = 0
     @AppStorage("streak") private var streak = 6
     func completeDailyWalk() {
@@ -209,8 +252,27 @@ struct ContentView: View {
     
     @State private var IsCoverShown = false
     
+    @State private var selection = FamilyActivitySelection()
+    @StateObject var model = AppSelectionModel()
+
+    let schedule = DeviceActivitySchedule(
+
+        intervalStart: DateComponents(hour: 0),
+
+        intervalEnd: DateComponents(hour: 23, minute: 59),
+
+        repeats: true
+
+    )
+    @State private var selectedHours = 2
+    @State private var selectedMinutes = 0
+    
+    
+        @State private var appPicker = false
+    
     @Environment(\.dismiss) var dismiss
     @State private var healthStore = HealthStore()
+    
     
     struct InfoRow: View {
         let icon: String
@@ -232,6 +294,7 @@ struct ContentView: View {
             .clipShape(RoundedRectangle(cornerRadius: 14))
         }
     }
+    
     
     var body: some View {
         NavigationStack{
@@ -325,16 +388,16 @@ struct ContentView: View {
                         .frame(width: 350, height: 450)
                     
                 }
-                else if water < 5671 {
-                    Text("Almost there!")                        .font(.system(size: 20))                        .padding(.horizontal, 40)
-
-
-                    Image(.fourbig)
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 350, height: 450)
-                    
-                }
+//                else if water < 5671 {
+//                    Text("Almost there!")                        .font(.system(size: 20))                        .padding(.horizontal, 40)
+//
+//
+//                    Image(.fourbig)
+//                        .resizable()
+//                        .scaledToFit()
+//                        .frame(width: 350, height: 450)
+//
+//                }
                 else {
                     Text("Hot damn!")                        .font(.system(size: 20))                        .padding(.horizontal, 40)
 
@@ -346,12 +409,55 @@ struct ContentView: View {
                     
                 }
                 HStack {
+                    //screen time
+                    Button (" Screen Time ") {
+                        shouldPresentScreenTimeSheet.toggle()
+                    }
+                    .font(.title2)
+                    .accentColor(.red)
+                    .controlSize(.extraLarge)
+                    .sheet(isPresented:$shouldPresentScreenTimeSheet) { }
+                    content :{
+                        VStack {
+
+                                    Button("Choose Apps you want to monitor") {
+
+                                        appPicker = true
+
+                                    }
+
+                                }
+
+                                .familyActivityPicker(
+                                    isPresented: $appPicker,
+                                    selection: $model.selection
+                                )
+                        Text("Screen Time Today")
+                        HStack {
+
+                            Picker("Hours", selection: $selectedHours) {
+                                ForEach(0...4, id: \.self) { hour in
+                                    Text("\(hour) h")
+                                }
+                            }
+                            .pickerStyle(.wheel)
+
+                            Picker("Minutes", selection: $selectedMinutes) {
+                                ForEach([0, 15, 30, 45], id: \.self) { minute in
+                                    Text("\(minute) min")
+                                }
+                            }
+                            .pickerStyle(.wheel)
+
+                        }
+                        .frame(height: 120)
+                    }
+                    
                     //button for bedtime
-                    Button (" Set Hours ") {
+                    Button (" Sleep Hours ") {
                         shouldPresentSleepSheet.toggle()
                     }
                     .font(.title2)
-                    .buttonStyle(.borderedProminent)
                     .accentColor(.blue)
                     .controlSize(.extraLarge)
                     .sheet(isPresented:$shouldPresentSleepSheet) {
@@ -364,7 +470,7 @@ struct ContentView: View {
                                     Button ("Enable Notifications") {
                                         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) { success, error in
                                             if success {
-                                                print("All set!")
+                                                print("Done!")
                                             } else if let error {
                                                 print(error.localizedDescription)
                                             }
@@ -605,7 +711,7 @@ struct ContentView: View {
                                         Spacer()
                                         Button("Back to Home Page"){
                                             if streak == 7 {
-                                                    water += 20
+                                                    water += 50
                                                     streak = 0
                                                     showAlert = true
                                                 } else {
@@ -641,14 +747,14 @@ struct ContentView: View {
                             }
                         }
                     }
-                } 
+                }
             }
         }
         .font(.title2)
-        .buttonStyle(.borderedProminent)
         .accentColor(.green)
         .controlSize(.extraLarge)
-    } 
+        
+    }
 }
 
 
