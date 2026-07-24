@@ -12,39 +12,6 @@ import ManagedSettings
 import Combine
 
 
-@MainActor
-class ScreenTimeManager: ObservableObject {
-
-    @Published var hasPermission = false
-
-    func requestPermission() async {
-
-        do {
-
-            try await AuthorizationCenter.shared.requestAuthorization(for: .individual)
-
-            hasPermission = true
-
-        } catch {
-
-            print("Authorization failed")
-
-            print(error)
-
-            hasPermission = false
-
-        }
-
-    }
-
-}
-
-
-class AppSelectionModel: ObservableObject {
-
-    @Published var selection = FamilyActivitySelection()
-
-}
 
 
 
@@ -80,7 +47,7 @@ class HealthStore{
     }
     func calculateSteps() async throws {
         
-        steps = 0
+        steps = 200000
         guard let healthStore = self.healthStore else { return }
         
         let calendar = Calendar(identifier: .gregorian)
@@ -201,6 +168,8 @@ struct ContentView: View {
     
     @State private var shouldPresentSleepSheet = false
     
+    @State private var infoSheet = false
+    
     
     //for the walk
     @State private var shouldPresentSheet1 = false
@@ -252,24 +221,13 @@ struct ContentView: View {
     
     @State private var IsCoverShown = false
     
-    @State private var selection = FamilyActivitySelection()
-    @StateObject var model = AppSelectionModel()
 
-    let schedule = DeviceActivitySchedule(
-
-        intervalStart: DateComponents(hour: 0),
-
-        intervalEnd: DateComponents(hour: 23, minute: 59),
-
-        repeats: true
-
-    )
-    @State private var selectedHours = 2
-    @State private var selectedMinutes = 0
     
-    
-        @State private var appPicker = false
-    
+    @AppStorage("hour") var selectedHours = 2
+    @AppStorage("minute") var selectedMinutes = 0
+    @AppStorage("explain") var explained = false
+    @State private var explainSheet = false
+        
     @Environment(\.dismiss) var dismiss
     @State private var healthStore = HealthStore()
     
@@ -300,6 +258,8 @@ struct ContentView: View {
         NavigationStack{
             VStack {
                 
+                
+                
                 HStack {
                     //water display
                     let changedWater = water - 50
@@ -323,7 +283,7 @@ struct ContentView: View {
                         .font(.system(size: 20))
                         .padding(.horizontal, 40)
 
-                    Image(.sapl)
+                    Image(.a)
                         .resizable()
                         .scaledToFit()
                         .frame(width: 350, height: 450)
@@ -333,7 +293,7 @@ struct ContentView: View {
                     Text("Tree has grown, make it larger!")                        .font(.system(size: 20))                         .padding(.horizontal, 40)
 
 
-                    Image(.sapling)
+                    Image(.b)
                         .resizable()
                         .scaledToFit()
                         .frame(width: 350, height: 450)
@@ -342,7 +302,7 @@ struct ContentView: View {
                     Text("Nice! Keep going!")                        .font(.system(size: 20))                         .padding(.horizontal, 40)
 
 
-                    Image(.supersmall)
+                    Image(.c)
                         .resizable()
                         .scaledToFit()
                         .frame(width: 350, height: 450)
@@ -352,7 +312,7 @@ struct ContentView: View {
                     Text("You're on the way!")                        .font(.system(size: 20))                         .padding(.horizontal, 40)
 
 
-                    Image(.smallt)
+                    Image(.d)
                         .resizable()
                         .scaledToFit()
                         .frame(width: 350, height: 450)
@@ -362,7 +322,7 @@ struct ContentView: View {
                     Text("That's pretty good!")                        .font(.system(size: 20))                         .padding(.horizontal, 40)
 
 
-                    Image(.firstmid)
+                    Image(.e)
                         .resizable()
                         .scaledToFit()
                         .frame(width: 350, height: 450)
@@ -372,7 +332,7 @@ struct ContentView: View {
                     Text("Come on!")                        .font(.system(size: 20))                         .padding(.horizontal, 40)
 
 
-                    Image(.secondmid)
+                    Image(.f)
                         .resizable()
                         .scaledToFit()
                         .frame(width: 350, height: 450)
@@ -382,27 +342,17 @@ struct ContentView: View {
                     Text("Oh yeah!")                        .font(.system(size: 20))                        .padding(.horizontal, 40)
 
 
-                    Image(.thirdbig)
+                    Image(.g)
                         .resizable()
                         .scaledToFit()
                         .frame(width: 350, height: 450)
                     
                 }
-//                else if water < 5671 {
-//                    Text("Almost there!")                        .font(.system(size: 20))                        .padding(.horizontal, 40)
-//
-//
-//                    Image(.fourbig)
-//                        .resizable()
-//                        .scaledToFit()
-//                        .frame(width: 350, height: 450)
-//
-//                }
                 else {
                     Text("Hot damn!")                        .font(.system(size: 20))                        .padding(.horizontal, 40)
 
 
-                    Image(.bigboy)
+                    Image(.h)
                         .resizable()
                         .scaledToFit()
                         .frame(width: 350, height: 450)
@@ -418,41 +368,65 @@ struct ContentView: View {
                     .controlSize(.extraLarge)
                     .sheet(isPresented:$shouldPresentScreenTimeSheet) { }
                     content :{
-                        VStack {
-
-                                    Button("Choose Apps you want to monitor") {
-
-                                        appPicker = true
-
+                        Form {
+                            Section {
+                                Text("Set your screen time goal")
+                                HStack {
+                                    
+                                    Picker("Hours", selection: $selectedHours) {
+                                        ForEach(0...4, id: \.self) { hour in
+                                            Text("\(hour) h")
+                                        }
                                     }
-
-                                }
-
-                                .familyActivityPicker(
-                                    isPresented: $appPicker,
-                                    selection: $model.selection
-                                )
-                        Text("Screen Time Today")
-                        HStack {
-
-                            Picker("Hours", selection: $selectedHours) {
-                                ForEach(0...4, id: \.self) { hour in
-                                    Text("\(hour) h")
+                                    .pickerStyle(.wheel)
+                                    
+                                    Picker("Minutes", selection: $selectedMinutes) {
+                                        ForEach([0, 15, 30, 45], id: \.self) { minute in
+                                            Text("\(minute) min")
+                                        }
+                                    }
+                                    .pickerStyle(.wheel)
+                                }.formStyle(.columns)
+                            }
+                            Section {
+                                Text("  Did you reach your goal?")
+                                HStack {
+                                    Button (" Yes ") {
+                                        showAlert = true
+                                        water += 25
+                                    }
+                                    .padding()
+                                                        .background(.blue)
+                                                        .foregroundStyle(.white)
+                                                        .clipShape(.rect(cornerRadius: 10))
+                                    .alert("Good job! You have \(water) now.", isPresented: $showAlert) {
+                                        Button("Close") {
+                                            showAlert = false
+                                            shouldPresentScreenTimeSheet.toggle()
+                                        
+                                    }
+                                    }
+                                    .padding()
+                                    Button (" No ") {
+                                        showAlert = true
+                                    }
+                                    .padding()
+                                                        .background(.red)
+                                                        .foregroundStyle(.white)
+                                                        .clipShape(.rect(cornerRadius: 10))
+                                    .alert("Try again tomorrow! You can do it!", isPresented: $showAlert) {
+                                        Button("Close") {
+                                            showAlert = false
+                                            shouldPresentScreenTimeSheet.toggle()
+                                        
+                                    }
+                                    }
+                                    
                                 }
                             }
-                            .pickerStyle(.wheel)
-
-                            Picker("Minutes", selection: $selectedMinutes) {
-                                ForEach([0, 15, 30, 45], id: \.self) { minute in
-                                    Text("\(minute) min")
-                                }
-                            }
-                            .pickerStyle(.wheel)
-
+                            .frame(height: 120)
                         }
-                        .frame(height: 120)
                     }
-                    
                     //button for bedtime
                     Button (" Sleep Hours ") {
                         shouldPresentSleepSheet.toggle()
@@ -477,6 +451,7 @@ struct ContentView: View {
                                         }
                                     }
                                     .font(.title3)
+                                    Text("From when to when did you sleep?")
                                     
                                     DatePicker(
                                                         "Bedtime",
@@ -490,7 +465,7 @@ struct ContentView: View {
                                                         displayedComponents: .hourAndMinute
                                                     )
                                     
-                                    Button ("Set your sleep time") {
+                                    Button ("Collect rewards") {
                                         water += Int(sleepHours)
                                         water += Int(sleepHours)
                                         
@@ -754,6 +729,71 @@ struct ContentView: View {
         .accentColor(.green)
         .controlSize(.extraLarge)
         
+        Button (" Info  ") {
+infoSheet = true
+        }
+        .font(.title2)
+        .padding()
+        .background(.gray)
+        .foregroundStyle(.white)
+        .clipShape(.rect(cornerRadius: 10))
+        .sheet(isPresented:$infoSheet) {
+        } content:{
+            VStack(spacing: 20) {
+                NavigationStack{
+                    Text("")
+                    Text("Information")
+                        .font(.title2)
+                    Form {
+                        
+                        Section {
+                            Text("Set your screen time goal and achieve it for water!")                                .font(.title3)
+
+                        }
+                        Section {
+                            Text("Sleep for longer to gain more water!")                                .font(.title3)
+
+                        }
+                        Section {
+                            Text("Walk for a while to gain water, and answer optional questions for additional water!")
+                                .font(.title3)
+                        }
+                        Section {
+                            Text("This will grow your tree!")                                .font(.title3)
+
+                        }
+                    }
+                }
+                Button("Close") {
+                    infoSheet = false
+                }
+                .font(.title2)
+                .padding()
+                .background(.gray)
+                .foregroundStyle(.white)
+                .clipShape(.rect(cornerRadius: 10))
+
+            }
+                
+            
+        }
+                
+
+//        .onAppear {
+//                    if explained == false {
+//                        showAlert = true
+//                    }
+//                }
+//                .alert("Welcome!", isPresented: $showAlert) {
+//                    Button("👍") {
+//                        explained = true
+//                    }
+//                } message: {
+//                    Text("""
+//                    Grow your tree by sleeping well, staying under your screen time goals and completing walks.
+//                    Check in every day to keep your progress going!
+//                    """)
+//                }
     }
 }
 
