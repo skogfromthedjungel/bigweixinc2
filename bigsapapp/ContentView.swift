@@ -47,7 +47,7 @@ class HealthStore{
     }
     func calculateSteps() async throws {
         
-        steps = 200000
+        steps = 0
         guard let healthStore = self.healthStore else { return }
         
         let calendar = Calendar(identifier: .gregorian)
@@ -489,13 +489,13 @@ struct ContentView: View {
                                                     }
                                                 
                                     
-                                    Chart(last7Days) { entry in
-                                        BarMark(
-                                            x: .value("Day", entry.date, unit: .day),
-                                            y: .value("Hours", entry.hours)
-                                        )
-                                    }
-                                    .frame(height: 250)
+//                                    Chart(last7Days) { entry in
+//                                        BarMark(
+//                                            x: .value("Day", entry.date, unit: .day),
+//                                            y: .value("Hours", entry.hours)
+//                                        )
+//                                    }
+//                                    .frame(height: 250)
                                     Button (" Go Back ") {
                                         shouldPresentSleepSheet.toggle()
                                     }
