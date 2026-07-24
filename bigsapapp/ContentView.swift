@@ -423,6 +423,9 @@ struct ContentView: View {
                                     }
                                     
                                 }
+                                Button ("Close") {
+                                    shouldPresentScreenTimeSheet.toggle()
+                                }
                             }
                             .frame(height: 120)
                         }
