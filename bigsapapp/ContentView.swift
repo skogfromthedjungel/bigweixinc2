@@ -1,16 +1,9 @@
 
-import Foundation
 import SwiftUI
 import HealthKit
 import Observation
 import SwiftData
-import Charts
 import UserNotifications
-import FamilyControls
-import DeviceActivity
-import ManagedSettings
-import Combine
-
 
 
 
@@ -177,6 +170,9 @@ struct ContentView: View {
     @State private var shouldPresentSheet3 = false
     
     @State private var shouldPresentScreenTimeSheet = false
+    @State private var showAAlert = false
+    @State private var showBAlert = false
+
     
     @State private var showAlert = false
     @State private var navigateToNextPage = false
@@ -289,7 +285,7 @@ struct ContentView: View {
                         .frame(width: 350, height: 450)
                     
                 }
-                else if water < 351 {
+                else if water < 301 {
                     Text("Tree has grown, make it larger!")                        .font(.system(size: 20))                         .padding(.horizontal, 40)
 
 
@@ -298,7 +294,7 @@ struct ContentView: View {
                         .scaledToFit()
                         .frame(width: 350, height: 450)
                 }
-                else if water < 601 {
+                else if water < 701 {
                     Text("Nice! Keep going!")                        .font(.system(size: 20))                         .padding(.horizontal, 40)
 
 
@@ -308,7 +304,7 @@ struct ContentView: View {
                         .frame(width: 350, height: 450)
                     
                 }
-                else if water < 1001 {
+                else if water < 1301 {
                     Text("You're on the way!")                        .font(.system(size: 20))                         .padding(.horizontal, 40)
 
 
@@ -318,7 +314,7 @@ struct ContentView: View {
                         .frame(width: 350, height: 450)
                     
                 }
-                else if water < 1501 {
+                else if water < 2101 {
                     Text("That's pretty good!")                        .font(.system(size: 20))                         .padding(.horizontal, 40)
 
 
@@ -328,7 +324,7 @@ struct ContentView: View {
                         .frame(width: 350, height: 450)
                     
                 }
-                else if water < 2751 {
+                else if water < 3101 {
                     Text("Come on!")                        .font(.system(size: 20))                         .padding(.horizontal, 40)
 
 
@@ -338,7 +334,7 @@ struct ContentView: View {
                         .frame(width: 350, height: 450)
                     
                 }
-                else if water <  4001 {
+                else if water <  4201 {
                     Text("Oh yeah!")                        .font(.system(size: 20))                        .padding(.horizontal, 40)
 
 
@@ -366,8 +362,7 @@ struct ContentView: View {
                     .font(.title2)
                     .accentColor(.red)
                     .controlSize(.extraLarge)
-                    .sheet(isPresented:$shouldPresentScreenTimeSheet) { }
-                    content :{
+                    .sheet(isPresented:$shouldPresentScreenTimeSheet) {
                         Form {
                             Section {
                                 Text("Set your screen time goal")
@@ -392,37 +387,39 @@ struct ContentView: View {
                                 Text("  Did you reach your goal?")
                                 HStack {
                                     Button (" Yes ") {
-                                        showAlert = true
+                                        showAAlert = true
                                         water += 25
                                     }
                                     .padding()
                                                         .background(.blue)
                                                         .foregroundStyle(.white)
                                                         .clipShape(.rect(cornerRadius: 10))
-                                    .alert("Good job! You have \(water) now.", isPresented: $showAlert) {
+                                                        .buttonStyle(.borderless)
+                                    .alert("Good job! You have \(water) now.", isPresented: $showAAlert) {
                                         Button("Close") {
-                                            showAlert = false
+                                            showAAlert = false
                                             shouldPresentScreenTimeSheet.toggle()
                                         
                                     }
                                     }
                                     .padding()
                                     Button (" No ") {
-                                        showAlert = true
+                                        showBAlert = true
                                     }
                                     .padding()
                                                         .background(.red)
                                                         .foregroundStyle(.white)
                                                         .clipShape(.rect(cornerRadius: 10))
-                                    .alert("Try again tomorrow! You can do it!", isPresented: $showAlert) {
-                                        Button("Close") {
-                                            showAlert = false
-                                            shouldPresentScreenTimeSheet.toggle()
-                                        
-                                    }
-                                    }
-                                    
+                                                        .buttonStyle(.borderless)
+                                                        .alert("Try again tomorrow!", isPresented: $showBAlert) {
+                                                            Button("Close") {
+                                                                showBAlert = false
+                                                                shouldPresentScreenTimeSheet.toggle()
+                                                            
+                                                        }
+                                                        }
                                 }
+                                
                                 Button ("Close") {
                                     shouldPresentScreenTimeSheet.toggle()
                                 }
@@ -430,6 +427,11 @@ struct ContentView: View {
                             .frame(height: 120)
                         }
                     }
+                    
+                    
+                    
+                    
+                    
                     //button for bedtime
                     Button (" Sleep Hours ") {
                         shouldPresentSleepSheet.toggle()
@@ -437,6 +439,7 @@ struct ContentView: View {
                     .font(.title2)
                     .accentColor(.blue)
                     .controlSize(.extraLarge)
+                    
                     .sheet(isPresented:$shouldPresentSleepSheet) {
                     } content:{
                         VStack(spacing: 20) {
@@ -507,6 +510,12 @@ struct ContentView: View {
                     }
                         
                 
+                    
+                    
+                    
+                    
+                    
+                    
 //for walk
                 Button (" Start a Walk ")
                 {
@@ -657,7 +666,7 @@ struct ContentView: View {
                                         
                                        
                                         
-                                        water += healthStore.steps/200
+                                        water += healthStore.steps/100
                                         question1 = ""
                                         question2 = ""
                                         question3 = ""
