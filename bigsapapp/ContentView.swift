@@ -101,6 +101,9 @@ struct ContentView: View {
     @State private var shouldPresentSheet2 = false
     @State private var shouldPresentSheet3 = false
     @State private var shouldPresentScreenTimeSheet = false
+    
+    @State private var showYesAlert = false
+    @State private var showNoAlert = false
 
     @State private var presentWalkQuestionsAfterIntro = false
     @State private var showAlert = false
@@ -109,8 +112,7 @@ struct ContentView: View {
     @State private var question2 = ""
     @State private var question3 = ""
     @State private var question4 = ""
-    @State private var question5 = ""
-    @State private var question6 = ""
+    
     @AppStorage("lastWalkDate") private var lastWalkDate: Double = 0
     @AppStorage("streak") private var streak = 6
     @AppStorage("hour") private var selectedHours = 2
@@ -318,15 +320,18 @@ struct ContentView: View {
                     }
                 }
                 Section("Did you reach your goal?") {
-                    Button("Yes") { showAlert = true; water += 25 }
+                    Button("Yes") { showYesAlert = true; water += 25 }
+                        .buttonStyle(.borderless)
                         .foregroundStyle(NaturePalette.b)
-                        .alert("Good job! You have \(water) now.", isPresented: $showAlert) {
-                            Button("Close") { showAlert = false; shouldPresentScreenTimeSheet = false }
+                        .alert("Good job! You have \(water) now.", isPresented: $showYesAlert) {
+                            Button("Close") { showYesAlert = false; shouldPresentScreenTimeSheet = false }
                         }
-                    Button("No") { showAlert = true }
+                    
+                    Button("No") { showNoAlert = true }
+                        .buttonStyle(.borderless)
                         .foregroundStyle(.red)
-                        .alert("Try again tomorrow! You can do it!", isPresented: $showAlert) {
-                            Button("Close") { showAlert = false; shouldPresentScreenTimeSheet = false }
+                        .alert("Try again tomorrow! You can do it!", isPresented: $showNoAlert) {
+                            Button("Close") { showNoAlert = false; shouldPresentScreenTimeSheet = false }
                         }
                 }
             }
@@ -429,6 +434,7 @@ struct ContentView: View {
                         Task {
                             await healthStore.requestAuthorization()
                             do { try await healthStore.calculateSteps() } catch { print(error) }
+                            shouldPresentSheet2 = false
                             shouldPresentSheet3 = true
                             if !question1.isEmpty { water += 5 }
                             if !question2.isEmpty { water += 10 }
